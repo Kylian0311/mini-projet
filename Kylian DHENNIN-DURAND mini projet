@@ -1,0 +1,247 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+
+#define MAX_PARKINGS 1000
+#define ADMIN_CODE "admin123"
+
+// ---------------- STRUCTURE -----------------QUESTION1
+int main()
+{
+typedef struct {
+    char identifiant[10];
+    char nom[100];
+    char adresse[150];
+    char ville[50];
+    char etat[20];
+    int places_disponibles;
+    int capacite_max;
+    char date_maj[30];
+    char affichage[20];
+} Parking;
+
+// ---------------- LECTURE FICHIER ----------------- QUESTION2
+int lesparkings(const char *nomFichier, Parking tableau[], int max) {
+    FILE *fichier = fopen(nomFichier, "r");
+    if (!fichier) {
+        perror("Erreur d'ouverture du fichier");
+        return -1;
+    }
+    char ligne[512];
+    int compteur = 0;
+    fgets(ligne, sizeof(ligne), fichier); // ignorer l'en-tete
+
+    while (fgets(ligne, sizeof(ligne), fichier) && compteur < max) {
+        char *token = strtok(ligne, ";");
+        if (token) strncpy(tableau[compteur].identifiant, token, 9);
+        token = strtok(NULL, ";");
+        if (token) strncpy(tableau[compteur].nom, token, 99);
+        token = strtok(NULL, ";");
+        if (token) strncpy(tableau[compteur].adresse, token, 149);
+        token = strtok(NULL, ";");
+        if (token) strncpy(tableau[compteur].ville, token, 49);
+        token = strtok(NULL, ";");
+        if (token) strncpy(tableau[compteur].etat, token, 19);
+        token = strtok(NULL, ";");
+        if (token) tableau[compteur].places_disponibles = atoi(token);
+        token = strtok(NULL, ";");
+        if (token) tableau[compteur].capacite_max = atoi(token);
+        token = strtok(NULL, ";");
+        if (token) strncpy(tableau[compteur].date_maj, token, 29);
+        token = strtok(NULL, ";");
+        if (token) strncpy(tableau[compteur].affichage, token, 19);
+        compteur++;
+    }
+    fclose(fichier);
+    return compteur;
+}
+
+// ---------------- AFFICHER UN PARKING -----------------QUESTION3
+void afficheparking(Parking tableau[], int taille, const char *id) {
+    for (int i = 0; i < taille; i++) {
+        if (strcmp(tableau[i].identifiant, id) == 0) {
+            printf("%s | %s | %s | %s | %s | %d/%d | %s | %s\n",
+                   tableau[i].identifiant,
+                   tableau[i].nom,
+                   tableau[i].adresse,
+                   tableau[i].ville,
+                   tableau[i].etat,
+                   tableau[i].places_disponibles,
+                   tableau[i].capacite_max,
+                   tableau[i].date_maj,
+                   tableau[i].affichage);
+            return;
+        }
+    }
+    printf("Parking non trouvé.\n");
+}
+
+// ---------------- AFFICHER TOUS LES PARKINGS -----------------QUESTION4
+void afficheparkings(Parking tableau[], int taille) {
+    for (int i = 0; i < taille; i++) {
+        afficheparking(tableau, taille, tableau[i].identifiant);
+    }
+}
+
+// ---------------- SORTIE PARKING -----------------QUESTION5
+void sortieParking(Parking tableau[], int taille, const char *id, const char *plaque, int heures) {
+    for (int i = 0; i < taille; i++) {
+        if (strcmp(tableau[i].identifiant, id) == 0) {
+            float tarif = 1.5; // €/heure
+            float montant = heures * tarif;
+            printf("Plaque: %s | Durée: %d h | Montant: %.2f €\n", plaque, heures, montant);
+            tableau[i].places_disponibles++;
+            return;
+        }
+    }
+    printf("Parking non trouvé.\n");
+}
+
+// ---------------- SUIVI CLIENT -----------------QUESTION5
+void suiviClient(const char *fichier, const char *plaque, int heures, float montant) {
+    FILE *f = fopen(fichier, "a");
+    if (!f) return;
+    time_t t = time(NULL);
+    fprintf(f, "%s;%d;%.2f;%s", plaque, heures, montant, ctime(&t));
+    fclose(f);
+}
+
+// ---------------- MISE À JOUR OCCUPATION -----------------QUESTION6
+void mettreAJourOccupation(Parking tableau[], int taille, const char *id, int entree) {
+    for (int i = 0; i < taille; i++) {
+        if (strcmp(tableau[i].identifiant, id) == 0) {
+            if (entree) tableau[i].places_disponibles--;
+            else tableau[i].places_disponibles++;
+            return;
+        }
+    }
+}
+
+// ---------------- MODE ADMIN -----------------QUESTION7
+int modeAdministrateur() {
+    char code[20];
+    printf("Code admin : ");
+    scanf("%s", code);
+    return strcmp(code, ADMIN_CODE) == 0;
+}
+
+// ---------------- VÉRIFIER PLACES -----------------QUESTION8
+int verifierPlacesDisponibles(Parking tableau[], int taille, const char *id) {
+    for (int i = 0; i < taille; i++) {
+        if (strcmp(tableau[i].identifiant, id) == 0) {
+            return tableau[i].places_disponibles == 0;
+        }
+    }
+    return 0;
+}
+
+// ---------------- SAUVEGARDE FICHIER -----------------QUESTION9 
+void sauvegarderEtatParking(const char *fichier, Parking tableau[], int taille) {
+    FILE *f = fopen(fichier, "w");
+    if (!f) return;
+    fprintf(f, "Identifiant;Nom;Adresse;Ville;Etat;Places disponibles;Capacite max;Date de mise a jour;Affichage panneaux\n");
+    for (int i = 0; i < taille; i++) {
+        fprintf(f, "%s;%s;%s;%s;%s;%d;%d;%s;%s\n",
+                tableau[i].identifiant,
+                tableau[i].nom,
+                tableau[i].adresse,
+                tableau[i].ville,
+                tableau[i].etat,
+                tableau[i].places_disponibles,
+                tableau[i].capacite_max,
+                tableau[i].date_maj,
+                tableau[i].affichage);
+    }
+    fclose(f);
+}
+
+// ---------------- MAIN -----------------
+int main() {
+    Parking parkings[MAX_PARKINGS];
+    int nb = lesparkings("parking-metropole.csv", parkings, MAX_PARKINGS);
+    if (nb <= 0) return 1;
+
+    int choix;
+    char id[10];
+    char plaque[20];
+    int heures;
+    do {
+        printf("\n1. Afficher un parking\n2. Afficher tous\n3. Sortie parking\n4. Vérifier dispo\n5. Admin\n6. Sauvegarder\n0. Quitter\nChoix : ");
+        scanf("%d", &choix);
+        switch (choix) {
+            case 1:
+                printf("ID parking : ");
+                scanf("%s", id);
+                afficheparking(parkings, nb, id);
+                break;
+            case 2:
+                afficheparkings(parkings, nb);
+                break;
+            case 3:
+                printf("ID parking : "); scanf("%s", id);
+                printf("Plaque : "); scanf("%s", plaque);
+                printf("Heures : "); scanf("%d", &heures);
+                sortieParking(parkings, nb, id, plaque, heures);
+                suiviClient("clients.txt", plaque, heures, heures * 1.5);
+                break;
+            case 4:
+                printf("ID parking : ");
+                scanf("%s", id);
+                if (verifierPlacesDisponibles(parkings, nb, id))
+                    printf("PARKING PLEIN\n");
+                else
+                    printf("Places disponibles\n");
+                break;
+            case 5:
+                if (modeAdministrateur()) {
+                    printf("Mode admin actif.\n");
+                    // Ajoute ici des modifications possibles
+                } else printf("Accès refusé.\n");
+                break;
+            case 6:
+                sauvegarderEtatParking("parking-metropole.csv", parkings, nb);
+                printf("Fichier mis à jour.\n");
+                break;
+        }
+    } while (choix != 0);
+// ---------------- Test des fonctions-----------------
+    printf("=== TEST LECTURE CSV ===\n");
+    printf("Nombre de parkings chargés : %d\n\n", nb);
+
+    printf("=== TEST AFFICHAGE UN PARKING (P01) ===\n");
+    afficheparking(parkings, nb, "P01");
+
+    printf("\n=== TEST AFFICHAGE TOUS LES PARKINGS ===\n");
+    afficheparkings(parkings, nb);
+
+    printf("\n=== TEST SORTIE PARKING POUR VEHICULE (P01 - ABC123) ===\n");
+    sortieParking(parkings, nb, "P01", "ABC123", 3);
+    suiviClient("clients.txt", "ABC123", 3, 3 * 1.5);
+
+    printf("\n=== TEST MISE À JOUR OCCUPATION (entrée dans P01) ===\n");
+    mettreAJourOccupation(parkings, nb, "P01", 1);
+    afficheparking(parkings, nb, "P01");
+
+    printf("\n=== TEST VÉRIFICATION DISPONIBILITÉ (P01) ===\n");
+    if (verifierPlacesDisponibles(parkings, nb, "P01")) {
+        printf("P01 est plein !\n");
+    } else {
+        printf("P01 a encore des places !\n");
+    }
+
+    printf("\n=== TEST SAUVEGARDE ETAT PARKING ===\n");
+    sauvegarderEtatParking("parking-metropole.csv", parkings, nb);
+    printf("État sauvegardé avec succès.\n");
+
+    printf("\n=== TEST MODE ADMINISTRATEUR ===\n");
+    if (modeAdministrateur()) {
+        printf("Accès admin autorisé.\n");
+    } else {
+        printf("Accès refusé.\n");
+    }
+
+    printf("\n========= FIN DES TESTS =========\n\n");
+    return 0;
+}
+}
