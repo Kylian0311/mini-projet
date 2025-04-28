@@ -6,7 +6,7 @@
 #define MAX_PARKINGS 1000
 #define ADMIN_CODE "admin123"
 
-// ---------------- STRUCTURE -----------------QUESTION1
+//  STRUCTURE -QUESTION1
 int main()
 {
 typedef struct {
@@ -21,7 +21,7 @@ typedef struct {
     char affichage[20];
 } Parking;
 
-// ---------------- LECTURE FICHIER ----------------- QUESTION2
+// - LECTURE FICHIER-QUESTION2
 int lesparkings(const char *nomFichier, Parking tableau[], int max) {
     FILE *fichier = fopen(nomFichier, "r");
     if (!fichier) {
@@ -57,7 +57,7 @@ int lesparkings(const char *nomFichier, Parking tableau[], int max) {
     return compteur;
 }
 
-// ---------------- AFFICHER UN PARKING -----------------QUESTION3
+// - AFFICHER UN PARKING-QUESTION3
 void afficheparking(Parking tableau[], int taille, const char *id) {
     for (int i = 0; i < taille; i++) {
         if (strcmp(tableau[i].identifiant, id) == 0) {
@@ -77,14 +77,14 @@ void afficheparking(Parking tableau[], int taille, const char *id) {
     printf("Parking non trouvé.\n");
 }
 
-// ---------------- AFFICHER TOUS LES PARKINGS -----------------QUESTION4
+//  AFFICHER TOUS LES PARKINGS-QUESTION4
 void afficheparkings(Parking tableau[], int taille) {
     for (int i = 0; i < taille; i++) {
         afficheparking(tableau, taille, tableau[i].identifiant);
     }
 }
 
-// ---------------- SORTIE PARKING -----------------QUESTION5
+// SORTIE PARKING-QUESTION5
 void sortieParking(Parking tableau[], int taille, const char *id, const char *plaque, int heures) {
     for (int i = 0; i < taille; i++) {
         if (strcmp(tableau[i].identifiant, id) == 0) {
@@ -98,7 +98,7 @@ void sortieParking(Parking tableau[], int taille, const char *id, const char *pl
     printf("Parking non trouvé.\n");
 }
 
-// ---------------- SUIVI CLIENT -----------------QUESTION5
+//SUIVI CLIENT-QUESTION5
 void suiviClient(const char *fichier, const char *plaque, int heures, float montant) {
     FILE *f = fopen(fichier, "a");
     if (!f) return;
@@ -107,7 +107,7 @@ void suiviClient(const char *fichier, const char *plaque, int heures, float mont
     fclose(f);
 }
 
-// ---------------- MISE À JOUR OCCUPATION -----------------QUESTION6
+// MISE À JOUR OCCUPATION-QUESTION6
 void mettreAJourOccupation(Parking tableau[], int taille, const char *id, int entree) {
     for (int i = 0; i < taille; i++) {
         if (strcmp(tableau[i].identifiant, id) == 0) {
@@ -118,7 +118,7 @@ void mettreAJourOccupation(Parking tableau[], int taille, const char *id, int en
     }
 }
 
-// ---------------- MODE ADMIN -----------------QUESTION7
+//MODE ADMIN-QUESTION7
 int modeAdministrateur() {
     char code[20];
     printf("Code admin : ");
@@ -126,7 +126,7 @@ int modeAdministrateur() {
     return strcmp(code, ADMIN_CODE) == 0;
 }
 
-// ---------------- VÉRIFIER PLACES -----------------QUESTION8
+// VÉRIFIER PLACES-QUESTION8
 int verifierPlacesDisponibles(Parking tableau[], int taille, const char *id) {
     for (int i = 0; i < taille; i++) {
         if (strcmp(tableau[i].identifiant, id) == 0) {
@@ -136,7 +136,7 @@ int verifierPlacesDisponibles(Parking tableau[], int taille, const char *id) {
     return 0;
 }
 
-// ---------------- SAUVEGARDE FICHIER -----------------QUESTION9 
+//SAUVEGARDE FICHIER-QUESTION9 
 void sauvegarderEtatParking(const char *fichier, Parking tableau[], int taille) {
     FILE *f = fopen(fichier, "w");
     if (!f) return;
@@ -156,7 +156,7 @@ void sauvegarderEtatParking(const char *fichier, Parking tableau[], int taille) 
     fclose(f);
 }
 
-// ---------------- MAIN -----------------
+// MAIN
 int main() {
     Parking parkings[MAX_PARKINGS];
     int nb = lesparkings("parking-metropole.csv", parkings, MAX_PARKINGS);
@@ -205,7 +205,7 @@ int main() {
                 break;
         }
     } while (choix != 0);
-// ---------------- Test des fonctions-----------------
+//Test des fonctions-
     printf("=== TEST LECTURE CSV ===\n");
     printf("Nombre de parkings chargés : %d\n\n", nb);
 
@@ -241,7 +241,7 @@ int main() {
         printf("Accès refusé.\n");
     }
 
-    printf("\n========= FIN DES TESTS =========\n\n");
+    printf("FIN DES TESTS\n");
     return 0;
 }
 }
