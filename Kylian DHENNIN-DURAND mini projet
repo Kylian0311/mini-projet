@@ -1,13 +1,13 @@
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 #include <time.h>
 
 #define MAX_PARKINGS 100
+#define ADMIN_CODE "admin123"
 
 typedef struct {
-    char id[10];
-    char nom[100];
+    int id;
+    char nom[50];
     char adresse[100];
     int capacite;
     char etat[20];
@@ -16,163 +16,183 @@ typedef struct {
 
 typedef struct {
     char plaque[20];
+    int idParking;
     time_t entree;
     time_t sortie;
     float montant;
 } Client;
 
-void lesparkings(const char *nomFichier, Parking *parkings, int *nb) {
-    FILE *f = fopen(nomFichier, "r");
-    if (!f) {
-        printf("Erreur d'ouverture du fichier.\n");
-        return;
+Parking parkings[MAX_PARKINGS];
+int totalParkings = 27;
+
+// Fonction 0 - Initialisation manuelle
+void initialiserParkings() {
+    for (int i = 0; i < totalParkings; i++) {
+        parkings[i].id = i + 1;
+        sprintf(parkings[i].nom, "Parking_%02d", i + 1);
+        sprintf(parkings[i].adresse, "Adresse du Parking %02d", i + 1);
+        parkings[i].capacite = 100 + (i % 10) * 10;
+        strcpy(parkings[i].etat, (i % 2 == 0) ? "Ouvert" : "Ferme");
+        parkings[i].disponibilite = parkings[i].capacite - (i * 2 % 30);
     }
-
-    char ligne[256];
-    fgets(ligne, sizeof(ligne), f); // Ignorer l'en-tête
-
-    *nb = 0;
-    while (fgets(ligne, sizeof(ligne), f) && *nb < MAX_PARKINGS) {
-        sscanf(ligne, "%[^,],%[^,],%[^,],%d,%[^,],%d",
-               parkings[*nb].id,
-               parkings[*nb].nom,
-               parkings[*nb].adresse,
-               &parkings[*nb].capacite,
-               parkings[*nb].etat,
-               &parkings[*nb].disponibilite);
-        (*nb)++;
-    }
-
-    fclose(f);
 }
 
-void afficheparking(Parking *parkings, int nb, const char *id) {
-    for (int i = 0; i < nb; i++) {
-        if (strcmp(parkings[i].id, id) == 0) {
-            printf("\nParking ID: %s\nNom: %s\nAdresse: %s\nCapacite: %d\nEtat: %s\nDisponibilite: %d\n",
-                   parkings[i].id, parkings[i].nom, parkings[i].adresse, parkings[i].capacite,
-                   parkings[i].etat, parkings[i].disponibilite);
+// Fonction 2 - Afficher un parking
+void afficheParking(int id) {
+    for (int i = 0; i < totalParkings; i++) {
+        if (parkings[i].id == id) {
+            printf("ID: %d | Nom: %s | Adresse: %s | Capacité: %d | Etat: %s | Disponibilité: %d\n",
+                   parkings[i].id, parkings[i].nom, parkings[i].adresse,
+                   parkings[i].capacite, parkings[i].etat, parkings[i].disponibilite);
             return;
         }
     }
-    printf("Parking non trouve.\n");
+    printf("Parking non trouvé.\n");
 }
 
-void afficheparkings(Parking *parkings, int nb) {
-    for (int i = 0; i < nb; i++) {
-        afficheparking(parkings, nb, parkings[i].id);
+// Fonction 3 - Afficher tous les parkings
+void afficheParkings() {
+    for (int i = 0; i < totalParkings; i++) {
+        afficheParking(parkings[i].id);
     }
 }
 
-void sortieParking(Parking *parkings, int nb, const char *id) {
-    char plaque[20];
-    int heures;
-    float tarifHoraire = 2.0;
-
-    printf("Entrez la plaque d'immatriculation : ");
-    fgets(plaque, sizeof(plaque), stdin);
-    plaque[strcspn(plaque, "\n")] = 0;
-
-    printf("Entrez le nombre d'heures stationnees : ");
-    scanf("%d", &heures);
-    getchar(); // consommer le \n
-
-    float montant = heures * tarifHoraire;
-    printf("Montant a payer : %.2f euros\n", montant);
-
-    FILE *f = fopen("clients.txt", "a");
-    if (f) {
-        time_t maintenant = time(NULL);
-        fprintf(f, "%s,%s,%d heures,%.2f euros,%s", id, plaque, heures, montant, ctime(&maintenant));
-        fclose(f);
-    }
-
-    for (int i = 0; i < nb; i++) {
-        if (strcmp(parkings[i].id, id) == 0) {
-            parkings[i].disponibilite++;
-            break;
-        }
-    }
-}
-
-int verifierPlacesDisponibles(Parking *parkings, int nb, const char *id) {
-    for (int i = 0; i < nb; i++) {
-        if (strcmp(parkings[i].id, id) == 0) {
-            return parkings[i].disponibilite == 0;
+// Fonction 4 - Gérer sortie de véhicule
+float sortieParking(int idParking, char plaque[], int secondes) {
+    for (int i = 0; i < totalParkings; i++) {
+        if (parkings[i].id == idParking) {
+            float montant = secondes * 0.05;
+            printf("Plaque: %s | Temps: %d sec | Montant: %.2f€\n", plaque, secondes, montant);
+            return montant;
         }
     }
     return 0;
 }
 
-void sauvegarderEtatParking(const char *nomFichier, Parking *parkings, int nb) {
-    FILE *f = fopen(nomFichier, "w");
-    if (!f) return;
-
-    fprintf(f, "id,nom,adresse,capacite,etat,disponibilite\n");
-    for (int i = 0; i < nb; i++) {
-        fprintf(f, "%s,%s,%s,%d,%s,%d\n",
-                parkings[i].id,
-                parkings[i].nom,
-                parkings[i].adresse,
-                parkings[i].capacite,
-                parkings[i].etat,
-                parkings[i].disponibilite);
-    }
-    fclose(f);
+// Fonction 5 - Suivi client
+void suiviClient(char plaque[], int idParking, int secondes, float montant) {
+    printf("=== Suivi Client ===\n");
+    printf("Plaque: %s | Parking ID: %d | Durée: %d sec | Montant: %.2f€\n", plaque, idParking, secondes, montant);
 }
 
-int main() {
-    Parking parkings[MAX_PARKINGS];
-    int nbParkings = 0;
+// Fonction 6 - Mise à jour occupation
+void mettreAJourOccupation(int id, int entree) {
+    for (int i = 0; i < totalParkings; i++) {
+        if (parkings[i].id == id) {
+            if (entree && parkings[i].disponibilite > 0) {
+                parkings[i].disponibilite--;
+            } else if (!entree && parkings[i].disponibilite < parkings[i].capacite) {
+                parkings[i].disponibilite++;
+            }
+            return;
+        }
+    }
+}
 
-    lesparkings("parking-metropole.csv", parkings, &nbParkings);
+// Fonction 7 - Mode admin
+int modeAdministrateur() {
+    char code[20];
+    printf("Entrez le code admin : ");
+    scanf("%s", code);
+    return strcmp(code, ADMIN_CODE) == 0;
+}
 
-    int choix;
-    char id[10];
+// Fonction 8 - Vérifier disponibilité
+int verifierPlacesDisponibles(int id) {
+    for (int i = 0; i < totalParkings; i++) {
+        if (parkings[i].id == id) {
+            return parkings[i].disponibilite == 0;
+        }
+    }
+    return 1;
+}
+
+// Fonction 9 - Sauvegarder état parking
+void sauvegarderEtatParking() {
+    printf("Sauvegarde simulée des données dans le CSV...\n");
+    for (int i = 0; i < totalParkings; i++) {
+        printf("%d;%s;%s;%d;%s;%d\n", parkings[i].id, parkings[i].nom, parkings[i].adresse,
+               parkings[i].capacite, parkings[i].etat, parkings[i].disponibilite);
+    }
+}
+
+// Menu utilisateur
+void menu() {
+    int choix, id, duree;
+    char plaque[20];
+
     do {
-        printf("\n=== MENU ===\n");
+        printf("\n===== MENU =====\n");
         printf("1. Afficher tous les parkings\n");
-        printf("2. Afficher un parking\n");
-        printf("3. Sortie d'un vehicule\n");
-        printf("4. Verifier si un parking est plein\n");
-        printf("5. Quitter\n");
+        printf("2. Afficher un parking spécifique\n");
+        printf("3. Entrée véhicule\n");
+        printf("4. Sortie véhicule\n");
+        printf("5. Vérifier disponibilité\n");
+        printf("6. Mode administrateur\n");
+        printf("7. Sauvegarder\n");
+        printf("0. Quitter\n");
         printf("Choix : ");
         scanf("%d", &choix);
-        getchar();
 
         switch (choix) {
             case 1:
-                afficheparkings(parkings, nbParkings);
+                afficheParkings();
                 break;
             case 2:
-                printf("Entrez l'ID du parking : ");
-                fgets(id, sizeof(id), stdin);
-                id[strcspn(id, "\n")] = 0;
-                afficheparking(parkings, nbParkings, id);
+                printf("ID du parking : ");
+                scanf("%d", &id);
+                afficheParking(id);
                 break;
             case 3:
-                printf("Entrez l'ID du parking : ");
-                fgets(id, sizeof(id), stdin);
-                id[strcspn(id, "\n")] = 0;
-                sortieParking(parkings, nbParkings, id);
+                printf("ID parking : ");
+                scanf("%d", &id);
+                printf("Plaque : ");
+                scanf("%s", plaque);
+                mettreAJourOccupation(id, 1);
+                printf("Véhicule entré.\n");
                 break;
             case 4:
-                printf("Entrez l'ID du parking : ");
-                fgets(id, sizeof(id), stdin);
-                id[strcspn(id, "\n")] = 0;
-                if (verifierPlacesDisponibles(parkings, nbParkings, id))
-                    printf("Le parking est plein.\n");
-                else
-                    printf("Des places sont disponibles.\n");
+                printf("ID parking : ");
+                scanf("%d", &id);
+                printf("Plaque : ");
+                scanf("%s", plaque);
+                printf("Temps de stationnement (secondes) : ");
+                scanf("%d", &duree);
+                float montant = sortieParking(id, plaque, duree);
+                mettreAJourOccupation(id, 0);
+                suiviClient(plaque, id, duree, montant);
                 break;
             case 5:
-                printf("Fermeture du programme.\n");
-                sauvegarderEtatParking("parking-metropole.csv", parkings, nbParkings);
+                printf("ID parking : ");
+                scanf("%d", &id);
+                if (verifierPlacesDisponibles(id))
+                    printf("Parking plein.\n");
+                else
+                    printf("Places disponibles.\n");
+                break;
+            case 6:
+                if (modeAdministrateur())
+                    printf("Accès admin autorisé.\n");
+                else
+                    printf("Accès refusé.\n");
+                break;
+            case 7:
+                sauvegarderEtatParking();
+                break;
+            case 0:
+                printf("Fin du programme.\n");
                 break;
             default:
                 printf("Choix invalide.\n");
         }
-    } while (choix != 5);
 
+    } while (choix != 0);
+}
+
+// Programme principal
+int main() {
+    initialiserParkings();
+    menu();
     return 0;
 }
+
